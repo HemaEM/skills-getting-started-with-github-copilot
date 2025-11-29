@@ -7,7 +7,7 @@ for extracurricular activities at Mergington High School.
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse
 import os
 from pathlib import Path
 
@@ -16,8 +16,7 @@ app = FastAPI(title="Mergington High School API",
 
 # Mount the static files directory
 current_dir = Path(__file__).parent
-app.mount("/static", StaticFiles(directory=os.path.join(Path(__file__).parent,
-          "static")), name="static")
+app.mount("/static", StaticFiles(directory="src/static"), name="static")
 
 # In-memory activity database
 activities = {
@@ -38,14 +37,50 @@ activities = {
         "schedule": "Mondays, Wednesdays, Fridays, 2:00 PM - 3:00 PM",
         "max_participants": 30,
         "participants": ["john@mergington.edu", "olivia@mergington.edu"]
+    },
+    "Basketball": {
+        "description": "Team basketball practice and competitive games",
+        "schedule": "Mondays and Wednesdays, 4:00 PM - 5:30 PM",
+        "max_participants": 15,
+        "participants": ["alex@mergington.edu"]
+    },
+    "Tennis": {
+        "description": "Tennis instruction and tournament preparation",
+        "schedule": "Tuesdays and Thursdays, 4:00 PM - 5:00 PM",
+        "max_participants": 10,
+        "participants": ["sarah@mergington.edu", "james@mergington.edu"]
+    },
+    "Drama Club": {
+        "description": "Theater productions and acting workshops",
+        "schedule": "Wednesdays and Fridays, 4:00 PM - 5:30 PM",
+        "max_participants": 25,
+        "participants": ["grace@mergington.edu"]
+    },
+    "Art Studio": {
+        "description": "Painting, drawing, and sculpture techniques",
+        "schedule": "Mondays and Thursdays, 3:30 PM - 5:00 PM",
+        "max_participants": 18,
+        "participants": ["nina@mergington.edu", "lucas@mergington.edu"]
+    },
+    "Science Club": {
+        "description": "Hands-on experiments and STEM exploration",
+        "schedule": "Tuesdays, 3:30 PM - 4:45 PM",
+        "max_participants": 16,
+        "participants": ["noah@mergington.edu"]
+    },
+    "Debate Team": {
+        "description": "Competitive debate and public speaking",
+        "schedule": "Thursdays, 4:00 PM - 5:30 PM",
+        "max_participants": 12,
+        "participants": ["maya@mergington.edu", "evan@mergington.edu"]
     }
 }
 
 
-@app.get("/")
-def root():
-    return RedirectResponse(url="/static/index.html")
 
+@app.get("/")
+def read_index():
+    return FileResponse("src/static/index.html")
 
 @app.get("/activities")
 def get_activities():
@@ -61,6 +96,10 @@ def signup_for_activity(activity_name: str, email: str):
 
     # Get the specific activity
     activity = activities[activity_name]
+    
+    # Validate student is not already signed up
+    if email in activity["participants"]:
+        raise HTTPException(status_code=400, detail="Student already signed up for this activity")
 
     # Add student
     activity["participants"].append(email)
